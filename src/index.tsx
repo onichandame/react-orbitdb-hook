@@ -1,16 +1,31 @@
 import { useEffect, useState } from 'react'
 import Orbit from 'orbit-db'
-import createIpfs from 'ipfs-http-client'
 
-type Ipfs = ReturnType<typeof createIpfs> | null
+type Ipfs = any
 
 export const useOrbitdb = (ipfs: Ipfs) => {
   const [orbitDb, setOrbitDb] = useState<Orbit | null>(null)
+  const [error, setError] = useState<Error>()
   // fix race problem
   useEffect(() => {
+    let isNew = true
     if (ipfs)
-      // typings need fix
-      Orbit.createInstance(ipfs as any).then(orbitDb => setOrbitDb(orbitDb))
+      Orbit.createInstance(ipfs)
+        .then(orbit => {
+          if (isNew) {
+            setOrbitDb(orbit)
+            setError(undefined)
+          }
+        })
+        .catch(e => {
+          if (isNew) {
+            setError(e)
+            setOrbitDb(null)
+          }
+        })
+    return () => {
+      isNew = false
+    }
   }, [ipfs])
-  return orbitDb
+  return { orbitDb, error }
 }

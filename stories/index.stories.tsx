@@ -1,23 +1,229 @@
 import { makeStyles } from '@material-ui/core/styles'
-import React, { FC } from 'react'
-import { Grid, Typography, AppBar, Toolbar } from '@material-ui/core'
+import React, {
+  ContextType,
+  useEffect,
+  MouseEvent,
+  createContext,
+  FC,
+  useState,
+  useContext,
+} from 'react'
+import {
+  Divider,
+  MenuItem,
+  Menu,
+  Badge,
+  Grid,
+  IconButton,
+  Typography,
+  AppBar,
+  Toolbar,
+} from '@material-ui/core'
 import { Meta, Story } from '@storybook/react'
+import { useIpfs, IpfsProvider } from '@onichandame/react-ipfs-hook'
+import {
+  Group,
+  SignalCellularConnectedNoInternet0Bar,
+  SignalCellular0Bar,
+  SignalCellular1Bar,
+  SignalCellular2Bar,
+  SignalCellular3Bar,
+  SignalCellular4Bar,
+} from '@material-ui/icons'
 
-import { useCount } from '../src'
+import { useOrbitdb } from '../src'
+
+const randStr = () =>
+  Math.random()
+    .toString(36)
+    .substr(2, 5)
+
+const Id = createContext(``)
+const Peers = createContext(
+  [] as {
+    addr: any
+    peer: string
+    // only if verbose: true
+    latency?: string
+    muxer: string
+    // only if verbose: true
+    streams?: string[]
+    direction: number
+  }[]
+)
+const PeerNum = createContext(0)
 
 const NavBar: FC = () => {
+  const { ipfs } = useIpfs()
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
+  const [peersAnchor, setPeersAnchor] = useState<HTMLElement | null>(null)
+  const [menuId] = useState(randStr())
+  const [peersId] = useState(randStr())
+  const [showNum] = useState(10)
+  const peerNum = useContext(PeerNum)
+  const peers = useContext(Peers)
+
+  const openMenu = (e: MouseEvent<HTMLElement>) => {
+    setMenuAnchor(e.currentTarget)
+  }
+  const closeMenu = () => {
+    setMenuAnchor(null)
+  }
+
+  const openPeers = (e: MouseEvent<HTMLElement>) => {
+    setPeersAnchor(e.currentTarget)
+  }
+  const closePeers = () => {
+    setPeersAnchor(null)
+  }
+
   return (
     <div style={{ flexGrow: 1 }}>
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" noWrap>
-            Example Hook
+            IPFS
           </Typography>
           <div style={{ flexGrow: 1 }} />
+          <IconButton
+            color="inherit"
+            aria-label="ipfs peers"
+            aria-controls={peersId}
+            aria-haspopup="true"
+            onClick={openPeers}
+          >
+            <Badge badgeContent={peerNum}>
+              <Group />
+            </Badge>
+          </IconButton>
+          <IconButton
+            color="inherit"
+            aria-label="ipfs node"
+            aria-controls={menuId}
+            aria-haspopup="true"
+            onClick={openMenu}
+          >
+            {peerNum <= 0 ? (
+              <SignalCellularConnectedNoInternet0Bar />
+            ) : peerNum < 10 ? (
+              <SignalCellular0Bar />
+            ) : peerNum < 64 ? (
+              <SignalCellular1Bar />
+            ) : peerNum < 128 ? (
+              <SignalCellular2Bar />
+            ) : peerNum < 256 ? (
+              <SignalCellular3Bar />
+            ) : (
+              <SignalCellular4Bar />
+            )}
+          </IconButton>
         </Toolbar>
       </AppBar>
+      <Menu
+        anchorEl={menuAnchor}
+        getContentAnchorEl={null}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        id={menuId}
+        keepMounted
+        open={!!menuAnchor}
+        onClose={closeMenu}
+      >
+        <MenuItem
+          onClick={() => {
+            closeMenu()
+            ipfs.stop()
+          }}
+        >
+          Stop
+        </MenuItem>
+      </Menu>
+      <Menu
+        anchorEl={peersAnchor}
+        getContentAnchorEl={null}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        id={peersId}
+        keepMounted
+        open={!!peersAnchor}
+        onClose={closePeers}
+      >
+        <MenuItem onClick={closePeers}>
+          <Grid container direction="row" spacing={2} justify="space-around">
+            <Grid item>total number: {peerNum}</Grid>
+          </Grid>
+        </MenuItem>
+        <Divider />
+        {peers.slice(0, showNum).map(peer => (
+          <MenuItem
+            key={randStr()}
+            onClick={() => {
+              closePeers()
+            }}
+          >
+            {peer.addr.toString()}
+          </MenuItem>
+        ))}
+        <Divider />
+        {peerNum > showNum && (
+          <MenuItem>
+            <Grid container direction="row" justify="space-around">
+              <Grid item>more</Grid>
+            </Grid>
+          </MenuItem>
+        )}
+      </Menu>
     </div>
   )
+}
+
+const Wrapper: FC = ({ children }) => {
+  const { ipfs, error } = useIpfs()
+  const [id, setId] = useState<ContextType<typeof Id>>(``)
+  const [peers, setPeers] = useState<ContextType<typeof Peers>>([])
+  const [peerNum, setPeerNum] = useState<ContextType<typeof PeerNum>>(0)
+  // update basic info regularly
+  useEffect(() => {
+    const reset = () => {
+      setId(``)
+      setPeers([])
+    }
+    let jobs: ReturnType<typeof setInterval>[] = []
+    if (ipfs && ipfs.id) ipfs.id().then(({ id }: { id: string }) => setId(id))
+    if (ipfs && ipfs.swarm && ipfs.swarm.peers) {
+      jobs.push(
+        setInterval(() => {
+          ipfs.swarm.peers().then((prs: any[]) => setPeers(prs))
+        }, 1000)
+      )
+    }
+    if (!ipfs) reset()
+    return () => jobs.forEach(job => clearInterval(job))
+  }, [ipfs])
+  // update derived info regularly
+  useEffect(() => {
+    const newPeerNum = peers.length
+    if (newPeerNum !== peerNum) setPeerNum(newPeerNum)
+  }, [peers, peerNum])
+  return (
+    <Id.Provider value={id}>
+      <Peers.Provider value={peers}>
+        <PeerNum.Provider value={peerNum}>
+          {error ? JSON.stringify(error.stack) : children}
+        </PeerNum.Provider>
+      </Peers.Provider>
+    </Id.Provider>
+  )
+}
+
+const Workspace: FC = () => {
+  const { ipfs } = useIpfs()
+  const [id, setId] = useState(``)
+  const { orbitDb, error } = useOrbitdb(ipfs)
+  useEffect(() => {
+    if (orbitDb) setId(orbitDb.id)
+  }, [orbitDb])
+  return <div>{JSON.stringify(error?.stack || id)}</div>
 }
 
 const Root: FC = () => {
@@ -28,16 +234,19 @@ const Root: FC = () => {
     },
   }))
   const styles = useStyles()
-  const { val } = useCount()
   return (
-    <div className={styles.root}>
-      <NavBar />
-      <Grid container justify="space-around" direction="row">
-        <Grid item>
-          <Typography variant="h3">{val}</Typography>
-        </Grid>
-      </Grid>
-    </div>
+    <IpfsProvider opts={{ host: `localhost`, port: 5001, protocol: `http` }}>
+      <Wrapper>
+        <div className={styles.root}>
+          <NavBar />
+          <Grid container justify="space-around" direction="row">
+            <Grid item>
+              <Workspace />
+            </Grid>
+          </Grid>
+        </div>
+      </Wrapper>
+    </IpfsProvider>
   )
 }
 
