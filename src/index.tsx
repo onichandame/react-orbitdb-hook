@@ -1,9 +1,16 @@
-import { useReducer, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import Orbit from 'orbit-db'
+import createIpfs from 'ipfs-http-client'
 
-export const useCount = () => {
-  const [val, update] = useReducer(old => old + 1, 0)
+type Ipfs = ReturnType<typeof createIpfs> | null
+
+export const useOrbitdb = (ipfs: Ipfs) => {
+  const [orbitDb, setOrbitDb] = useState<Orbit | null>(null)
+  // fix race problem
   useEffect(() => {
-    setInterval(update, 1000)
-  }, [])
-  return { val }
+    if (ipfs)
+      // typings need fix
+      Orbit.createInstance(ipfs as any).then(orbitDb => setOrbitDb(orbitDb))
+  }, [ipfs])
+  return orbitDb
 }
