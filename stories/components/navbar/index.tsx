@@ -1,26 +1,19 @@
-import { makeStyles } from '@material-ui/core/styles'
-import React, {
-  ContextType,
-  useEffect,
-  MouseEvent,
-  createContext,
-  FC,
-  useState,
-  useContext,
-} from 'react'
+import React, { MouseEvent, useContext, FC, useState } from 'react'
+import { useSnackbar } from 'notistack'
+import { useIpfs } from '@onichandame/react-ipfs-hook'
 import {
   Divider,
+  Dialog,
+  DialogTitle,
+  Grid,
   MenuItem,
   Menu,
   Badge,
-  Grid,
   IconButton,
-  Typography,
   AppBar,
   Toolbar,
+  Typography,
 } from '@material-ui/core'
-import { Meta, Story } from '@storybook/react'
-import { useIpfs, IpfsProvider } from '@onichandame/react-ipfs-hook'
 import {
   Group,
   SignalCellularConnectedNoInternet0Bar,
@@ -31,37 +24,22 @@ import {
   SignalCellular4Bar,
 } from '@material-ui/icons'
 
-import { useOrbitdb } from '../src'
+import { randStr } from '../../utils'
+import { IpfsId, PeerNum, Peers } from '../../context'
+import { PeersList } from './peersList'
 
-const randStr = () =>
-  Math.random()
-    .toString(36)
-    .substr(2, 5)
-
-const Id = createContext(``)
-const Peers = createContext(
-  [] as {
-    addr: any
-    peer: string
-    // only if verbose: true
-    latency?: string
-    muxer: string
-    // only if verbose: true
-    streams?: string[]
-    direction: number
-  }[]
-)
-const PeerNum = createContext(0)
-
-const NavBar: FC = () => {
+export const NavBar: FC = () => {
   const { ipfs } = useIpfs()
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const [peersAnchor, setPeersAnchor] = useState<HTMLElement | null>(null)
   const [menuId] = useState(randStr())
   const [peersId] = useState(randStr())
   const [showNum] = useState(10)
+  const [peerListOpen, setPeerListOpen] = useState(false)
   const peerNum = useContext(PeerNum)
   const peers = useContext(Peers)
+  const id = useContext(IpfsId)
+  const { enqueueSnackbar } = useSnackbar()
 
   const openMenu = (e: MouseEvent<HTMLElement>) => {
     setMenuAnchor(e.currentTarget)
@@ -130,6 +108,16 @@ const NavBar: FC = () => {
         onClose={closeMenu}
       >
         <MenuItem
+          onClick={e => {
+            e.preventDefault()
+            closeMenu()
+            navigator.clipboard.writeText(id)
+            enqueueSnackbar(`id clipped to clipboard!`, { variant: `success` })
+          }}
+        >
+          my id: {id}
+        </MenuItem>
+        <MenuItem
           onClick={() => {
             closeMenu()
             ipfs.stop()
@@ -166,102 +154,23 @@ const NavBar: FC = () => {
         ))}
         <Divider />
         {peerNum > showNum && (
-          <MenuItem>
+          <MenuItem
+            onClick={e => {
+              e.preventDefault()
+              closePeers()
+              setPeerListOpen(true)
+            }}
+          >
             <Grid container direction="row" justify="space-around">
               <Grid item>more</Grid>
             </Grid>
           </MenuItem>
         )}
       </Menu>
+      <Dialog open={peerListOpen} onClose={() => setPeerListOpen(false)}>
+        <DialogTitle>Peers</DialogTitle>
+        <PeersList />
+      </Dialog>
     </div>
   )
 }
-
-const Wrapper: FC = ({ children }) => {
-  const { ipfs, error } = useIpfs()
-  const [id, setId] = useState<ContextType<typeof Id>>(``)
-  const [peers, setPeers] = useState<ContextType<typeof Peers>>([])
-  const [peerNum, setPeerNum] = useState<ContextType<typeof PeerNum>>(0)
-  // update basic info regularly
-  useEffect(() => {
-    const reset = () => {
-      setId(``)
-      setPeers([])
-    }
-    let jobs: ReturnType<typeof setInterval>[] = []
-    if (ipfs && ipfs.id) ipfs.id().then(({ id }: { id: string }) => setId(id))
-    if (ipfs && ipfs.swarm && ipfs.swarm.peers) {
-      jobs.push(
-        setInterval(() => {
-          ipfs.swarm.peers().then((prs: any[]) => setPeers(prs))
-        }, 1000)
-      )
-    }
-    if (!ipfs) reset()
-    return () => jobs.forEach(job => clearInterval(job))
-  }, [ipfs])
-  // update derived info regularly
-  useEffect(() => {
-    const newPeerNum = peers.length
-    if (newPeerNum !== peerNum) setPeerNum(newPeerNum)
-  }, [peers, peerNum])
-  return (
-    <Id.Provider value={id}>
-      <Peers.Provider value={peers}>
-        <PeerNum.Provider value={peerNum}>
-          {error ? JSON.stringify(error.stack) : children}
-        </PeerNum.Provider>
-      </Peers.Provider>
-    </Id.Provider>
-  )
-}
-
-const Workspace: FC = () => {
-  const { ipfs } = useIpfs()
-  const [id, setId] = useState(``)
-  const { orbitDb, error } = useOrbitdb(ipfs)
-  useEffect(() => {
-    if (orbitDb) setId(orbitDb.id)
-  }, [orbitDb])
-  return <div>{JSON.stringify(error?.stack || id)}</div>
-}
-
-const Root: FC = () => {
-  const useStyles = makeStyles(theme => ({
-    root: {
-      flexGrow: 1,
-      backgroundColor: theme.palette.background.paper,
-    },
-  }))
-  const styles = useStyles()
-  return (
-    <IpfsProvider opts={{ host: `localhost`, port: 5001, protocol: `http` }}>
-      <Wrapper>
-        <div className={styles.root}>
-          <NavBar />
-          <Grid container justify="space-around" direction="row">
-            <Grid item>
-              <Workspace />
-            </Grid>
-          </Grid>
-        </div>
-      </Wrapper>
-    </IpfsProvider>
-  )
-}
-
-export default {
-  title: 'Example Hook',
-  component: Root,
-  argTypes: {},
-  parameters: {
-    controls: { expanded: true },
-  },
-} as Meta
-
-const Template: Story = args => <Root {...args} />
-
-// By passing using the Args format for exported stories, you can control the props for a component for reuse in a test
-// https://storybook.js.org/docs/react/workflows/unit-testing
-export const Example = Template.bind({})
-Example.args = {}
