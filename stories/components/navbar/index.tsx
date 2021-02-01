@@ -71,7 +71,7 @@ export const NavBar: FC = () => {
             onClick={openPeers}
           >
             <Badge badgeContent={peerNum}>
-              <Group />
+              <Group color={peerNum === 0 ? `error` : `inherit`} />
             </Badge>
           </IconButton>
           <IconButton
@@ -82,7 +82,7 @@ export const NavBar: FC = () => {
             onClick={openMenu}
           >
             {peerNum <= 0 ? (
-              <SignalCellularConnectedNoInternet0Bar />
+              <SignalCellularConnectedNoInternet0Bar color="error" />
             ) : peerNum < 10 ? (
               <SignalCellular0Bar />
             ) : peerNum < 64 ? (
