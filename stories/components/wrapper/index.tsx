@@ -6,7 +6,7 @@ import { OrbitWrapper } from './orbit'
 
 export const Wrapper: FC<{
   ipfsProps: ComponentProps<typeof IpfsWrapper>
-  orbitProps: ComponentProps<typeof OrbitWrapper>
+  orbitProps?: ComponentProps<typeof OrbitWrapper>
 }> = ({ children, ipfsProps, orbitProps }) => (
   <SnackbarProvider maxSnack={3}>
     <IpfsWrapper {...ipfsProps}>

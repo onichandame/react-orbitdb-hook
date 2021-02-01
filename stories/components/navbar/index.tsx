@@ -112,7 +112,9 @@ export const NavBar: FC = () => {
             e.preventDefault()
             closeMenu()
             navigator.clipboard.writeText(id)
-            enqueueSnackbar(`id clipped to clipboard!`, { variant: `success` })
+            enqueueSnackbar(`IPFS id clipped to clipboard!`, {
+              variant: `success`,
+            })
           }}
         >
           my id: {id}

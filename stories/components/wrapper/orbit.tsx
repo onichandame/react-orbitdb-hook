@@ -25,7 +25,7 @@ export const OrbitWrapper: FC<Omit<
 >> = ({ children, ...other }) => {
   const { ipfs } = useIpfs()
   return (
-    <OrbitProvider ipfs={ipfs} {...other}>
+    <OrbitProvider ipfs={ipfs as any} {...other}>
       <OrbitInfo>{children}</OrbitInfo>
     </OrbitProvider>
   )

@@ -9,19 +9,7 @@ import Orbit from 'orbit-db'
 
 import { Nullable } from './types'
 
-type Ipfs = any
-
-const useOrbitPromise = (
-  ...args: Parameters<typeof Orbit['createInstance']>
-) => {
-  const [orbitPromise, setOrbitPromise] = useState<Nullable<Promise<Orbit>>>(
-    null
-  )
-  useEffect(() => {
-    setOrbitPromise(Orbit.createInstance(...args))
-  }, args)
-  return orbitPromise
-}
+type Ipfs = Parameters<typeof Orbit['createInstance']>[0]
 
 const Context = createContext<{
   orbit: Nullable<Orbit>
@@ -32,16 +20,15 @@ const Context = createContext<{
 })
 
 export const OrbitProvider: FC<{
-  ipfs: Ipfs
-  opts: Parameters<typeof Orbit['createInstance']>[1]
-}> = ({ ipfs, opts }) => {
-  const orbitPromise = useOrbitPromise(ipfs, opts)
+  ipfs: Nullable<Ipfs>
+  opts?: Parameters<typeof Orbit['createInstance']>[1]
+}> = ({ ipfs, opts, children }) => {
   const [orbit, setOrbit] = useState<Nullable<Orbit>>(null)
   const [error, setError] = useState<Nullable<Error>>(null)
   useEffect(() => {
     let isNew = true
     if (ipfs)
-      orbitPromise
+      Orbit.createInstance(ipfs, opts)
         ?.then(orbit => {
           if (isNew) {
             setOrbit(orbit)
@@ -57,8 +44,10 @@ export const OrbitProvider: FC<{
     return () => {
       isNew = false
     }
-  }, [orbitPromise])
-  return <Context.Provider value={{ error, orbit }}></Context.Provider>
+  }, [ipfs, opts])
+  return (
+    <Context.Provider value={{ error, orbit }}>{children}</Context.Provider>
+  )
 }
 
 export const useOrbit = () => {
