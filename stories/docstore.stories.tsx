@@ -9,16 +9,15 @@ import { OrbitBaseProps } from './types'
 
 type Props = OrbitBaseProps & { address: string }
 
+type Doc = { _id: string; val: string }
+
 const Workspace: FC<{ address: string }> = ({ address }) => {
   const { orbit } = useOrbit()
-  const { store, error } = useDocStore(orbit, address)
+  const { store, error } = useDocStore<Doc>(orbit, address)
   const { enqueueSnackbar } = useSnackbar()
   const [id, setId] = useState(``)
   useEffect(() => {
-    const jobs: ReturnType<typeof setInterval>[] = []
-    if (store)
-      jobs.push(setInterval(() => setId(store.address.toString()), 1000))
-    return () => jobs.forEach(job => clearInterval(job))
+    setId(store.address.toString())
   }, [store])
   return (
     <div
