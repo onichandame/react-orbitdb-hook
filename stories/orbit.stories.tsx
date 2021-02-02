@@ -4,6 +4,9 @@ import { useSnackbar } from 'notistack'
 
 import { Layout } from './components'
 import { OrbitId } from './context'
+import { OrbitBaseProps } from './types'
+
+type Props = OrbitBaseProps
 
 const Workspace: FC = () => {
   const id = useContext(OrbitId)
@@ -19,10 +22,6 @@ const Workspace: FC = () => {
       my id: {id}
     </div>
   )
-}
-
-type Props = {
-  ipfsUrl: string
 }
 
 const Root: FC<Props> = ({ ipfsUrl }) => {
@@ -56,5 +55,5 @@ const Template: Story<Props> = args => <Root {...args} />
 
 // By passing using the Args format for exported stories, you can control the props for a component for reuse in a test
 // https://storybook.js.org/docs/react/workflows/unit-testing
-export const Example = Template.bind({})
-Example.args = { ipfsUrl: `http://localhost:5001` }
+export const Orbit = Template.bind({})
+Orbit.args = { ipfsUrl: `http://localhost:5001` }

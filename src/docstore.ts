@@ -7,7 +7,7 @@ import { Nullable } from './types'
 export const useDocStore = <T extends object>(
   orbit: Nullable<Orbit>,
   address: string,
-  opts: Parameters<Orbit['docstore']>[1]
+  opts?: Parameters<Orbit['docstore']>[1]
 ) => {
   const [store, setStore] = useState<DocStore<T> | null>(null)
   const [error, setError] = useState<Error | null>(null)
