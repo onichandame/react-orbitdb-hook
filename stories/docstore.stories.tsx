@@ -1,6 +1,8 @@
 import React, { useEffect, useState, FC } from 'react'
 import { Meta, Story } from '@storybook/react'
 import { useSnackbar } from 'notistack'
+import { Grid, ListItem, ListItemText, ListItemIcon } from '@material-ui/core'
+import { LibraryBooksRounded } from '@material-ui/icons'
 
 import { useDocStore, useOrbit } from '../src'
 
@@ -13,22 +15,34 @@ type Doc = { _id: string; val: string }
 
 const Workspace: FC<{ address: string }> = ({ address }) => {
   const { orbit } = useOrbit()
-  const { store, error } = useDocStore<Doc>(orbit, address)
+  const { store } = useDocStore<Doc>(orbit, address)
   const { enqueueSnackbar } = useSnackbar()
   const [id, setId] = useState(``)
   useEffect(() => {
-    setId(store.address.toString())
+    setId(store?.address.toString() || ``)
   }, [store])
   return (
-    <div
-      onClick={e => {
-        e.preventDefault()
-        navigator.clipboard.writeText(id)
-        enqueueSnackbar(`store address copied!`, { variant: `success` })
-      }}
-    >
-      {error ? error.stack : `my address: ${id}`}
-    </div>
+    <Grid container direction="row" justify="space-around">
+      <Grid
+        item
+        onClick={e => {
+          e.preventDefault()
+          navigator.clipboard.writeText(id)
+          enqueueSnackbar(`store address copied!`, { variant: `success` })
+        }}
+      >
+        <ListItem>
+          <ListItemIcon>
+            <LibraryBooksRounded color={!!id ? `primary` : `error`} />
+          </ListItemIcon>
+          <ListItemText
+            primary={
+              !!id ? `click to copy collection id` : `collection not ready`
+            }
+          />
+        </ListItem>
+      </Grid>
+    </Grid>
   )
 }
 
@@ -47,7 +61,7 @@ const Root: FC<Props> = ({ ipfsUrl, address }) => {
 }
 
 export default {
-  title: 'DocStore',
+  title: 'Store/DocStore',
   component: Root,
   argTypes: {
     ipfsUrl: {

@@ -1,6 +1,8 @@
 import React, { useContext, FC } from 'react'
 import { Meta, Story } from '@storybook/react'
 import { useSnackbar } from 'notistack'
+import { StorageRounded } from '@material-ui/icons'
+import { Grid, ListItem, ListItemText, ListItemIcon } from '@material-ui/core'
 
 import { Layout } from './components'
 import { OrbitId } from './context'
@@ -12,15 +14,28 @@ const Workspace: FC = () => {
   const id = useContext(OrbitId)
   const { enqueueSnackbar } = useSnackbar()
   return (
-    <div
-      onClick={e => {
-        e.preventDefault()
-        navigator.clipboard.writeText(id)
-        enqueueSnackbar(`Orbit ID copied!`, { variant: `success` })
-      }}
-    >
-      my id: {id}
-    </div>
+    <Grid container direction="row" justify="space-around">
+      <Grid
+        item
+        onClick={e => {
+          e.preventDefault()
+          navigator.clipboard.writeText(id)
+          enqueueSnackbar(`Orbit ID copied!`, { variant: `success` })
+        }}
+      >
+        <ListItem>
+          <ListItemIcon>
+            <StorageRounded
+              color={!!id ? `primary` : `error`}
+              fontSize="large"
+            />
+          </ListItemIcon>
+          <ListItemText
+            primary={!!id ? `click to copy database ID` : `database not ready`}
+          />
+        </ListItem>
+      </Grid>
+    </Grid>
   )
 }
 
