@@ -5,7 +5,7 @@ import {
   Table,
   TableHead,
   TableRow,
-  TableBody,
+  TableCell,
   Grid,
   ListItem,
   ListItemText,
@@ -54,7 +54,11 @@ const Workspace: FC<{ address: string }> = ({ address }) => {
       </Grid>
       <Grid item>
         <Table>
-          <TableHead></TableHead>
+          <TableHead>
+            <TableRow>
+              <TableCell></TableCell>
+            </TableRow>
+          </TableHead>
         </Table>
       </Grid>
     </Grid>
