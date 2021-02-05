@@ -1,17 +1,27 @@
 import React, { useEffect, useState, FC } from 'react'
 import { Meta, Story } from '@storybook/react'
 import { useSnackbar } from 'notistack'
-import { Grid, ListItem, ListItemText, ListItemIcon } from '@material-ui/core'
+import {
+  Table,
+  TableHead,
+  TableRow,
+  TableBody,
+  Grid,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+} from '@material-ui/core'
 import { LibraryBooksRounded } from '@material-ui/icons'
 
 import { useDocStore, useOrbit } from '../src'
+import { randStr } from './utils'
 
 import { Layout } from './components'
 import { OrbitBaseProps } from './types'
 
 type Props = OrbitBaseProps & { address: string }
 
-type Doc = { _id: string; val: string }
+type Doc = { _id: string; name: string; email: string }
 
 const Workspace: FC<{ address: string }> = ({ address }) => {
   const { orbit } = useOrbit()
@@ -41,6 +51,11 @@ const Workspace: FC<{ address: string }> = ({ address }) => {
             }
           />
         </ListItem>
+      </Grid>
+      <Grid item>
+        <Table>
+          <TableHead></TableHead>
+        </Table>
       </Grid>
     </Grid>
   )
