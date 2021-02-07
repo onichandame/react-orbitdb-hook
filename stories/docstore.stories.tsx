@@ -1,9 +1,11 @@
-import React, { useEffect, useState, FC } from 'react'
+import React, { useCallback, useEffect, useState, FC } from 'react'
 import { Meta, Story } from '@storybook/react'
 import { useSnackbar } from 'notistack'
 import {
+  IconButton,
   Table,
   TableHead,
+  TableBody,
   TableRow,
   TableCell,
   Grid,
@@ -11,7 +13,7 @@ import {
   ListItemText,
   ListItemIcon,
 } from '@material-ui/core'
-import { LibraryBooksRounded } from '@material-ui/icons'
+import { Add, LibraryBooksRounded } from '@material-ui/icons'
 
 import { useDocStore, useOrbit } from '../src'
 import { randStr } from './utils'
@@ -28,11 +30,18 @@ const Workspace: FC<{ address: string }> = ({ address }) => {
   const { store } = useDocStore<Doc>(orbit, address)
   const { enqueueSnackbar } = useSnackbar()
   const [id, setId] = useState(``)
+  const [docs, setDocs] = useState<Doc[]>([])
+  const updateDocs = useCallback(() => {
+    if (store) {
+      setDocs(store.all)
+    }
+  }, [store])
   useEffect(() => {
     setId(store?.address.toString() || ``)
+    updateDocs()
   }, [store])
   return (
-    <Grid container direction="row" justify="space-around">
+    <Grid container direction="column" alignItems="center">
       <Grid
         item
         onClick={e => {
@@ -56,9 +65,27 @@ const Workspace: FC<{ address: string }> = ({ address }) => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell></TableCell>
+              <TableCell>name</TableCell>
+              <TableCell>email</TableCell>
             </TableRow>
           </TableHead>
+          <TableBody>
+            {docs.map(doc => (
+              <TableRow key={randStr()}>
+                <TableCell>{doc.name}</TableCell>
+                <TableCell>{doc.email}</TableCell>
+              </TableRow>
+            ))}
+            <TableRow>
+              <Grid container direction="row" justify="space-around">
+                <Grid item>
+                  <IconButton>
+                    <Add />
+                  </IconButton>
+                </Grid>
+              </Grid>
+            </TableRow>
+          </TableBody>
         </Table>
       </Grid>
     </Grid>
