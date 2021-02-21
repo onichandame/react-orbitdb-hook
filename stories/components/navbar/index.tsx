@@ -60,7 +60,7 @@ export const NavBar: FC = () => {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" noWrap>
-            IPFS
+            OrbitDB
           </Typography>
           <div style={{ flexGrow: 1 }} />
           <IconButton

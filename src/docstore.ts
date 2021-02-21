@@ -13,12 +13,19 @@ export const useDocStore = <T extends object>(
   const [error, setError] = useState<Error | null>(null)
   useEffect(() => {
     let isNew = true
-    orbit?.docstore<T>(address).then(store => {
-      if (isNew) {
-        setError(null)
-        setStore(store)
+    ;(async () => {
+      try {
+        const store = await orbit?.docstore<T>(address)
+        if (isNew) {
+          await store?.load()
+          setError(null)
+          setStore(store || null)
+        }
+      } catch (e) {
+        console.error(e)
+        alert(JSON.stringify(e))
       }
-    })
+    })()
     return () => {
       isNew = false
     }
