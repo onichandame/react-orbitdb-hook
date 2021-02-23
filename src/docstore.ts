@@ -24,6 +24,8 @@ export const useDocStore = <T extends object>(
       } catch (e) {
         console.error(e)
         alert(JSON.stringify(e.message || e))
+        setError(e)
+        setStore(null)
       }
     })()
     return () => {
