@@ -49,7 +49,10 @@ export const DocStore: FC<{ address: string }> = ({ address }) => {
   useEffect(() => {
     setId(store?.address.toString() || ``)
     updateDocs()
-  }, [store])
+    store?.events.on(`replicated`, () => {
+      updateDocs()
+    })
+  }, [store, updateDocs])
   return (
     <>
       <Grid container direction="column" alignItems="center">

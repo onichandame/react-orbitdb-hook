@@ -23,7 +23,7 @@ export const useDocStore = <T extends object>(
         }
       } catch (e) {
         console.error(e)
-        alert(JSON.stringify(e))
+        alert(JSON.stringify(e.message || e))
       }
     })()
     return () => {
